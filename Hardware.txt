@@ -1,0 +1,59 @@
+The AVR version of the MRB-CSCN is a software-only project.  It relies on
+other hardware pieces to make it work.  Specifically, it expects:
+
+- an Awesome Stick as a core (MRB-IAS)
+- an MRB-XIO to do the signal, switch, and turnout I/O
+
+
+
+Pin assignment for the XIO:
+
+A0 - West Points Upper Signal Red
+A1 - West Points Upper Signal Yellow
+A2 - West Points Upper Signal Green
+A3 - West Points Lower Signal Red
+A4 - West Points Lower Signal Yellow
+A5 - West Points Lower Signal Green
+A6 - West Main Signal Red
+A7 - West Main Signal Yellow
+
+B0 - West Main Signal Green
+B1 - West Siding Signal Red
+B2 - West Siding Signal Yellow
+B3 - West Siding Signal Green
+B4 - East Points Upper Signal Red
+B5 - East Points Upper Signal Yellow
+B6 - East Points Upper Signal Green
+B7 - East Points Lower Signal Red
+
+C0 - East Points Lower Signal Yellow
+C1 - East Points Lower Signal Green
+C2 - East Main Signal Red
+C3 - East Main Signal Yellow
+C4 - East Main Signal Green
+C5 - East Siding Signal Red
+C6 - East Siding Signal Yellow
+C7 - East Siding Signal Green
+
+D0 - East Turnout Timelock LED (+5V = LED on)
+D1 - West Turnout Timelock LED (+5V = LED on)
+D2 - n/c
+D3 - n/c
+D4 - East Turnout Control (EE_OPTIONS:1 (set) Nor=+5V Rev=GND, (clr)Nor=GND Rev=+5V)
+D5 - West Turnout Control (EE_OPTIONS:2 (set) Nor=+5V Rev=GND, (clr)Nor=GND Rev=+5V)
+D6 - East Turnout Position (Nor=GND, Rev=+5V)
+D7 - West Turnout Position (Nor=GND, Rev=+5V)
+
+E0 - East Turnout Request (+5=Normal, GND=Rev)
+E1 - West Turnout Request (+5=Normal, GND=Rev)
+E2 - East Turnout Unlock (+5=Normal, GND=Unlock)
+E3 - West Turnout Unlock (+5=Normal, GND=Unlock)
+E4 - (via BD4X) West OS occupancy
+E5 - (via BD4X) East OS occupancy
+E6 - (via BD4X) Siding occupancy
+E7 - (via BD4X) Mainline occupancy
+
+Commands:
+<CP# 1-2><M/D - Main/Diverging><E/W/N - clear east/west/none>
+
+
