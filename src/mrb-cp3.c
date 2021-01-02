@@ -845,7 +845,7 @@ static inline void vitalLogic()
 
 }
 
-#define pointsUnlockedSwitch()  ((debounced_inputs[1] & PNTS_UNLOCK)?false:true)
+#define pointsUnlockedSwitch()  ((debounced_inputs[0] & PNTS_UNLOCK)?false:true)
 
 int main(void)
 {
