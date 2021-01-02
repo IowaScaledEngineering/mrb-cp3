@@ -89,6 +89,10 @@ volatile uint8_t events = 0;
 #define TURNOUT_0_AB  0
 #define TURNOUT_1_BC  1
 
+#define OPTIONS_INVERT_TURNOUT_AB 0x01
+#define OPTIONS_INVERT_TURNOUT_BC 0x02
+#define OPTIONS_INVERT_TIMELOCK   0x04
+
 
 // Internal occupancy bits byte 0
 
@@ -483,7 +487,7 @@ void SetTurnout(uint8_t turnout, uint8_t points)
 			{
 				turnouts |= PNTS_BC_CNTL;
 				// Implementation-specific behaviour - do whatever needs to happen to physically move the turnout here
-				if (options & 0x01)
+				if (options & 0x02)
 					xio1Outputs[2] |= PNTS_BC_CNTL;
 				else
 					xio1Outputs[2] &= ~(PNTS_BC_CNTL); 
@@ -492,7 +496,7 @@ void SetTurnout(uint8_t turnout, uint8_t points)
 			{
 				turnouts &= ~(PNTS_BC_CNTL);
 				// Implementation-specific behaviour - do whatever needs to happen to physically move the turnout here
-				if (options & 0x01)
+				if (options & 0x02)
 					xio1Outputs[2] &= ~(PNTS_BC_CNTL); 
 				else
 					xio1Outputs[2] |= PNTS_BC_CNTL;
@@ -848,7 +852,14 @@ static inline void vitalLogic()
 
 }
 
-#define pointsUnlockedSwitch()  ((debounced_inputs[0] & PNTS_UNLOCK)?false:true)
+bool pointsUnlockedSwitch()
+{
+	bool timelockSwitchInverted = (OPTIONS_INVERT_TIMELOCK & eeprom_read_byte((uint8_t*)EE_OPTIONS));
+	bool retval = (debounced_inputs[0] & PNTS_UNLOCK)?false:true;
+	if (timelockSwitchInverted)
+		retval = !retval;
+	return retval;
+}
 
 int main(void)
 {
