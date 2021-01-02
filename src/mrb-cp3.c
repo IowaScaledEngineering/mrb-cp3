@@ -186,7 +186,7 @@ volatile uint8_t events = 0;
 
 uint8_t debounced_inputs[2], old_debounced_inputs[2];
 uint8_t clearance, old_clearance;
-uint8_t occupancy, old_occupancy;
+uint8_t occupancy[2], old_occupancy[2];
 
 uint8_t turnouts, old_turnouts;
 uint8_t clock_a[2] = {0,0}, clock_b[2] = {0,0};
@@ -344,9 +344,10 @@ void init(void)
 	for(i=0; i<sizeof(ext_occupancy); i++)
 		ext_occupancy[i] = old_ext_occupancy[i] = 0;
 
+	for(i=0; i<sizeof(occupancy); i++)
+		occupancy[i] = old_occupancy[i] = 0;
 
 	clearance = old_clearance = 0;
-	occupancy = old_occupancy = 0;
 	turnouts = old_turnouts = 0;
 }
 
@@ -457,7 +458,7 @@ void SetTurnout(uint8_t turnout, uint8_t points)
 	switch(turnout)
 	{
 		case TURNOUT_0_AB:
-			if (POINTS_REVERSE_FORCE == points || (POINTS_REVERSE_SAFE == points && !(occupancy & OCC_OS_SECT)))
+			if (POINTS_REVERSE_FORCE == points || (POINTS_REVERSE_SAFE == points && !(occupancy[0] & OCC_OS_SECT)))
 			{
 				turnouts |= PNTS_AB_CNTL;
 				// Implementation-specific behaviour - do whatever needs to happen to physically move the turnout here
@@ -466,7 +467,7 @@ void SetTurnout(uint8_t turnout, uint8_t points)
 				else
 					xio1Outputs[2] &= ~(PNTS_AB_CNTL); 
 			}
-			else if (POINTS_NORMAL_FORCE == points || (POINTS_NORMAL_SAFE == points && !(occupancy & OCC_OS_SECT)))
+			else if (POINTS_NORMAL_FORCE == points || (POINTS_NORMAL_SAFE == points && !(occupancy[0] & OCC_OS_SECT)))
 			{
 				turnouts &= ~(PNTS_AB_CNTL);
 				// Implementation-specific behaviour - do whatever needs to happen to physically move the turnout here
@@ -478,7 +479,7 @@ void SetTurnout(uint8_t turnout, uint8_t points)
 			break;
 
 		case TURNOUT_1_BC:
-			if (POINTS_REVERSE_FORCE == points || (POINTS_REVERSE_SAFE == points && !(occupancy & OCC_OS_SECT)))
+			if (POINTS_REVERSE_FORCE == points || (POINTS_REVERSE_SAFE == points && !(occupancy[0] & OCC_OS_SECT)))
 			{
 				turnouts |= PNTS_BC_CNTL;
 				// Implementation-specific behaviour - do whatever needs to happen to physically move the turnout here
@@ -487,7 +488,7 @@ void SetTurnout(uint8_t turnout, uint8_t points)
 				else
 					xio1Outputs[2] &= ~(PNTS_BC_CNTL); 
 			}
-			else if (POINTS_NORMAL_FORCE == points || (POINTS_NORMAL_SAFE == points && !(occupancy & OCC_OS_SECT)))
+			else if (POINTS_NORMAL_FORCE == points || (POINTS_NORMAL_SAFE == points && !(occupancy[0] & OCC_OS_SECT)))
 			{
 				turnouts &= ~(PNTS_BC_CNTL);
 				// Implementation-specific behaviour - do whatever needs to happen to physically move the turnout here
@@ -540,7 +541,7 @@ void SetClearance(uint8_t controlPoint, uint8_t newClear)
 		case CONTROLPOINT_1:
 			if (CLEARANCE_NONE != newClear)
 			{
-				if (OCC_OS_SECT & occupancy)
+				if (OCC_OS_SECT & occupancy[0])
 					break;
 			}
 			clearance &= 0xF0;
@@ -717,7 +718,7 @@ static inline void vitalLogic()
 	signalHeads[SIG_MAIN_C] = ASPECT_RED;
 
 	// Drop clearance if we see occupancy
-	if (occupancy & OCC_OS_SECT)
+	if (occupancy[0] & OCC_OS_SECT)
 		SetClearance(CONTROLPOINT_1, CLEARANCE_NONE);
 
 	cleared = GetClearance(CONTROLPOINT_1);
@@ -760,7 +761,7 @@ static inline void vitalLogic()
 			head = SIG_MAIN_B;
 		}
 		
-		if (getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_P_ADJOIN) || OCC_OS_SECT & occupancy)
+		if (getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_P_ADJOIN) || (OCC_OS_SECT & occupancy[0]))
 			signalHeads[head] = ASPECT_RED;
 		else if (getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_P_APPROACH))
 			signalHeads[head] = ASPECT_YELLOW;
@@ -775,7 +776,7 @@ static inline void vitalLogic()
 		if(turnouts & (PNTS_AB_STATUS))
 		{
 			// Lined to siding
-			if ((OCC_OS_SECT & occupancy) || getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MA_ADJOIN))
+			if ((OCC_OS_SECT & occupancy[0]) || getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MA_ADJOIN))
 				signalHeads[SIG_PNTS_LOWER] = ASPECT_RED;
 			else if (getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MA_APPROACH))
 				signalHeads[SIG_PNTS_LOWER] = ASPECT_YELLOW;
@@ -786,7 +787,7 @@ static inline void vitalLogic()
 		}
 		else if (!(turnouts & (PNTS_AB_STATUS)) && (turnouts & (PNTS_BC_STATUS)))
 		{
-			if ((OCC_OS_SECT & occupancy) || getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MC_ADJOIN))
+			if ((OCC_OS_SECT & occupancy[0]) || getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MC_ADJOIN))
 				signalHeads[SIG_PNTS_LOWER] = ASPECT_RED;
 			else if (getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MC_APPROACH))
 				signalHeads[SIG_PNTS_LOWER] = ASPECT_YELLOW;
@@ -797,7 +798,7 @@ static inline void vitalLogic()
 		}
 		else if (!(turnouts & (PNTS_AB_STATUS)) && !(turnouts & (PNTS_BC_STATUS)))
 		{
-			if ((OCC_OS_SECT & occupancy) || getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MB_ADJOIN))
+			if ((OCC_OS_SECT & occupancy[0]) || getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MB_ADJOIN))
 				signalHeads[SIG_PNTS_UPPER] = ASPECT_RED;
 			else if (getExtInput(ext_occupancy, sizeof(ext_occupancy), XOCC_MB_APPROACH))
 				signalHeads[SIG_PNTS_UPPER] = ASPECT_YELLOW;
@@ -811,36 +812,38 @@ static inline void vitalLogic()
 	// Good news - the signals are already defaulted to red
 
 	// Clear virtual occupancies
-	occupancy &= ~(OCC_VIRT_P_APPROACH | OCC_VIRT_P_ADJOIN | OCC_VIRT_MA_APPROACH | OCC_VIRT_MA_ADJOIN | OCC_VIRT_MB_APPROACH | OCC_VIRT_MB_ADJOIN | OCC_VIRT_MC_APPROACH | OCC_VIRT_MC_ADJOIN);
+	occupancy[0] &= ~(OCC_VIRT_P_APPROACH | OCC_VIRT_P_ADJOIN | OCC_VIRT_MA_APPROACH | OCC_VIRT_MA_ADJOIN | OCC_VIRT_MB_APPROACH | OCC_VIRT_MB_ADJOIN);
+	occupancy[1] &= ~(OCC_VIRT_MC_APPROACH | OCC_VIRT_MC_ADJOIN);
 
 	// Calculate east CP virtual occupancies
 	if(turnoutLocked)
 	{
 		if(ASPECT_FL_RED == signalHeads[SIG_MAIN_A] || ASPECT_RED == signalHeads[SIG_MAIN_A])
-			occupancy |= OCC_VIRT_MA_ADJOIN | OCC_VIRT_MA_APPROACH;
+			occupancy[0] |= OCC_VIRT_MA_ADJOIN | OCC_VIRT_MA_APPROACH;
 		else if (ASPECT_YELLOW == signalHeads[SIG_MAIN_A])
-			occupancy |= OCC_VIRT_MA_APPROACH;
+			occupancy[0] |= OCC_VIRT_MA_APPROACH;
 
 		if(ASPECT_FL_RED == signalHeads[SIG_MAIN_B] || ASPECT_RED == signalHeads[SIG_MAIN_B])
-			occupancy |= OCC_VIRT_MB_ADJOIN | OCC_VIRT_MB_APPROACH;
+			occupancy[0] |= OCC_VIRT_MB_ADJOIN | OCC_VIRT_MB_APPROACH;
 		else if (ASPECT_YELLOW == signalHeads[SIG_MAIN_B])
-			occupancy |= OCC_VIRT_MB_APPROACH;
+			occupancy[0] |= OCC_VIRT_MB_APPROACH;
 
 		if(ASPECT_FL_RED == signalHeads[SIG_MAIN_C] || ASPECT_RED == signalHeads[SIG_MAIN_C])
-			occupancy |= OCC_VIRT_MC_ADJOIN | OCC_VIRT_MC_APPROACH;
+			occupancy[1] |= OCC_VIRT_MC_ADJOIN | OCC_VIRT_MC_APPROACH;
 		else if (ASPECT_YELLOW == signalHeads[SIG_MAIN_C])
-			occupancy |= OCC_VIRT_MC_APPROACH;
+			occupancy[1] |= OCC_VIRT_MC_APPROACH;
 
 		
 		// Turnout is properly lined one way or the other
 		if ((ASPECT_FL_RED == signalHeads[SIG_PNTS_LOWER] || ASPECT_RED == signalHeads[SIG_PNTS_LOWER]) && (ASPECT_RED == signalHeads[SIG_PNTS_UPPER] || ASPECT_FL_RED == signalHeads[SIG_PNTS_UPPER]))
-			occupancy |= OCC_VIRT_P_ADJOIN | OCC_VIRT_P_APPROACH;
+			occupancy[0] |= OCC_VIRT_P_ADJOIN | OCC_VIRT_P_APPROACH;
 		else if (ASPECT_YELLOW == signalHeads[SIG_PNTS_LOWER] || ASPECT_FL_YELLOW == signalHeads[SIG_PNTS_LOWER] || ASPECT_YELLOW == signalHeads[SIG_PNTS_UPPER] || ASPECT_FL_YELLOW == signalHeads[SIG_PNTS_UPPER])
-			occupancy |= OCC_VIRT_P_APPROACH;
+			occupancy[0] |= OCC_VIRT_P_APPROACH;
 	
 	} else {
 		//  Control Point improperly lined, trip virtual occupancy
-		occupancy |= OCC_VIRT_P_APPROACH | OCC_VIRT_P_ADJOIN | OCC_VIRT_MA_APPROACH | OCC_VIRT_MA_ADJOIN | OCC_VIRT_MB_APPROACH | OCC_VIRT_MB_ADJOIN | OCC_VIRT_MC_APPROACH | OCC_VIRT_MC_ADJOIN;
+		occupancy[0] |= OCC_VIRT_P_APPROACH | OCC_VIRT_P_ADJOIN | OCC_VIRT_MA_APPROACH | OCC_VIRT_MA_ADJOIN | OCC_VIRT_MB_APPROACH | OCC_VIRT_MB_ADJOIN;
+		occupancy[1] |= OCC_VIRT_MC_APPROACH | OCC_VIRT_MC_ADJOIN;
 	}
 
 }
@@ -987,17 +990,19 @@ int main(void)
 		if (memcmp(signalHeads, old_signalHeads, sizeof(signalHeads))
 			|| old_turnouts != turnouts
 			|| old_clearance != clearance
-			|| old_occupancy != occupancy)
+			|| old_occupancy[0] != occupancy[0]
+			|| old_occupancy[1] != occupancy[1])
 		{
 			// Something Changed - time to update
 			for(i=0; i<sizeof(signalHeads); i++)
 				old_signalHeads[i] = signalHeads[i];
 			for(i=0; i<sizeof(ext_occupancy); i++)
 				old_ext_occupancy[i] = ext_occupancy[i];
+			for(i=0; i<sizeof(occupancy); i++)
+				old_occupancy[i] = occupancy[i];
 
 			old_turnouts = turnouts;
 			old_clearance = clearance;
-			old_occupancy = occupancy;
 
 			// Set changed such that a packet gets sent
 			changed = 1;
@@ -1070,13 +1075,13 @@ Byte
 			uint8_t txBuffer[MRBUS_BUFFER_SIZE];
 			txBuffer[MRBUS_PKT_SRC] = mrbus_dev_addr;
 			txBuffer[MRBUS_PKT_DEST] = 0xFF;
-			txBuffer[MRBUS_PKT_LEN] = 11;
+			txBuffer[MRBUS_PKT_LEN] = 12;
 			txBuffer[5] = 'S';
 			txBuffer[6] = ((signalHeads[SIG_MAIN_B]<<4) & 0xF0) | (signalHeads[SIG_MAIN_A] & 0x0F);
-			txBuffer[7] = signalHeads[SIG_MAIN_C] & 0x0F;
+			txBuffer[7] = (signalHeads[SIG_MAIN_C] & 0x0F) | ((occupancy[1]<<4) & 0xF0);
 			txBuffer[8] = ((signalHeads[SIG_PNTS_UPPER]<<4) & 0xF0) | (signalHeads[SIG_PNTS_LOWER] & 0x0F);
 			
-			txBuffer[9] = occupancy;
+			txBuffer[9] = occupancy[0];
 			
 			switch(GetClearance(CONTROLPOINT_1))
 			{
@@ -1370,9 +1375,9 @@ void PktHandler(void)
 
 			case EE_OS_ADDR:
 				if (bitset)
-					occupancy |= OCC_OS_SECT;
+					occupancy[0] |= OCC_OS_SECT;
 				else
-					occupancy &= ~(OCC_OS_SECT);
+					occupancy[0] &= ~(OCC_OS_SECT);
 				break;
 
 
