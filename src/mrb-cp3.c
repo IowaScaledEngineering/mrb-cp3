@@ -1218,23 +1218,23 @@ void PktHandler(void)
 			//  6 - Control point being manipulated
 			//  7 - Turnout normal/reverse
 			//  8 - Clear eastbound or westbound
-			if (CONTROLPOINT_1 == rxBuffer[6] && STATE_LOCKED == turnoutState)
-				CodeCTCRoute(CONTROLPOINT_1, rxBuffer[7], rxBuffer[8], PktDirToClearance(rxBuffer[9]));
-			goto PktIgnore;
-
-		case 'T':
-			if (STATE_LOCKED == turnoutState)
+			if (rxBuffer[MRBUS_PKT_LEN] >= 9 && 'T' == rxBuffer[6] && ('M' == rxBuffer[8] || 'D' == rxBuffer[8]))
 			{
-				switch(rxBuffer[6])
+				if(STATE_LOCKED == turnoutState)
 				{
-					case 1:
-						CodeCTCRoute(CONTROLPOINT_1, rxBuffer[7], POINTS_UNAFFECTED, CLEARANCE_NONE);
-						break;
-					case 2:
-						CodeCTCRoute(CONTROLPOINT_1, POINTS_UNAFFECTED, rxBuffer[7], CLEARANCE_NONE);
-						break;
+					switch(rxBuffer[7])
+					{
+						case 1:
+							CodeCTCRoute(CONTROLPOINT_1, rxBuffer[8], POINTS_UNAFFECTED, CLEARANCE_NONE);
+							break;
+
+						case 2:
+							CodeCTCRoute(CONTROLPOINT_1, POINTS_UNAFFECTED, rxBuffer[8], CLEARANCE_NONE);
+							break;
+					}
 				}
-			}
+			} else if (CONTROLPOINT_1 == rxBuffer[6] && STATE_LOCKED == turnoutState)
+				CodeCTCRoute(CONTROLPOINT_1, rxBuffer[7], rxBuffer[8], PktDirToClearance(rxBuffer[9]));
 			goto PktIgnore;
 
 		case 'W':
