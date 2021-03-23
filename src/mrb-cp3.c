@@ -1233,6 +1233,17 @@ void PktHandler(void)
 							break;
 					}
 				}
+				txBuffer[MRBUS_PKT_DEST] = rxBuffer[MRBUS_PKT_SRC];
+				txBuffer[MRBUS_PKT_SRC] = mrbus_dev_addr;
+				txBuffer[MRBUS_PKT_LEN] = 9;
+				txBuffer[MRBUS_PKT_TYPE] = 'c';
+				txBuffer[MRBUS_PKT_TYPE+1] = rxBuffer[6];
+				txBuffer[MRBUS_PKT_TYPE+2] = rxBuffer[7];
+				txBuffer[MRBUS_PKT_TYPE+2] = rxBuffer[8];
+				mrbusPktQueuePush(&mrbusTxQueue, txBuffer, txBuffer[MRBUS_PKT_LEN]);
+
+				
+
 			} else if (CONTROLPOINT_1 == rxBuffer[6] && STATE_LOCKED == turnoutState)
 				CodeCTCRoute(CONTROLPOINT_1, rxBuffer[7], rxBuffer[8], PktDirToClearance(rxBuffer[9]));
 			goto PktIgnore;
