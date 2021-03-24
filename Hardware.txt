@@ -1,9 +1,18 @@
 The AVR version of the MRB-CSCN is a software-only project.  It relies on
 other hardware pieces to make it work.  Specifically, it expects:
 
-- an Awesome Stick as a core (MRB-IAS)
-- an MRB-XIO to do the signal, switch, and turnout I/O
+- an Awesome Stick as a core (MRB-IAS) and an I2C-XIO
+- or a MRB-XIO to do the signal, switch, and turnout I/O
 
+
+North/West                     South/East
+
+  Main A  ------------ 
+             |-O      \   OO-|
+  Main B  ---------------------  Points
+             |-O  /
+  Main C  --------
+             |-O
 
 
 Pin assignment for the XIO:
